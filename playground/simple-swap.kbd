@@ -1,0 +1,12 @@
+(defsrc)
+
+(deflayermap (base)
+  ; (fork S-; (unshift ;) (sft) )
+)
+
+(defcfg
+  process-unmapped-keys yes
+  macos-dev-names-exclude (
+    "M720 Triathlon"
+  )
+)

@@ -1,0 +1,211 @@
+;; 7-15-2025
+;; Backup before drastic changes
+;;-----------------------------------------------------------------------------
+;; Timing variables for tap-hold effects.
+(defvar
+  ;; The key must be pressed twice in 200ms to enable repetitions.
+  TAP 200
+  ;; The key must be held 200ms to become a layer shift.
+  HOLD 200
+  ;; Slightly higher value for typing keys, to prevent unexpected hold effect.
+  LONG_HOLD 300
+
+  ;; tot=time out tap
+  tot 220 
+)
+
+;; `defsrc` defines the keys that will be intercepted by kanata.
+
+;; Define the source keyboard layout (based on standard MacOS keyboard)
+ ;; Mac, standard finger assignment
+(defsrc
+  grv  1    2    3    4    5    6    7    8    9    0    -    =    bspc
+  tab  q    w    e    r    t    y    u    i    o    p    [    ]    \
+  caps a    s    d    f    g    h    j    k    l    ;    '    ret
+  lsft z    x    c    v    b    n    m    ,    .    /    rsft
+  lctl lalt lmet           spc            rmet ralt rctl
+)
+
+;; Add R before prefix to indicate right-hand modifier
+;; https://github.com/jtroo/kanata/blob/main/docs/fancy_symbols.md
+;; C- Left Control
+;; A- Left Alt, Option
+;; S- Left Shift
+;; M- Left Meta, Command, GUI
+
+;; Base layer: layer-taps under the thumbs + home-row mods on ASDF and HJKL
+(deflayermap (base)
+ ;; define home row mods (they act as typing-layer triggers, too )
+ f (t! homerowmod $tot 160 f lsft)
+ j (t! homerowmod $tot 160 j rsft)
+ d (t! homerowmod $tot 160 d lctl)
+ k (t! homerowmod $tot 160 k rctl)
+ s (t! homerowmod $tot 160 s lalt)
+ l (t! homerowmod $tot 160 l ralt)
+ a (t! homerowmod $tot 160 a lmet)
+ ; (t! homerowmod $tot 160 ; rmet)
+ ;; define each letter as typing-layer trigger
+ q (multi q @.tp) w (multi w @.tp) e (multi e @.tp) r (multi r @.tp) t (multi t @.tp) 
+ y (multi y @.tp) u (multi u @.tp) i (multi i @.tp) o (multi o @.tp) p (multi p @.tp) 
+ g (multi g @.tp) h (multi h @.tp) 
+ z (multi z @.tp) x (multi x @.tp) c (multi c @.tp) v (multi v @.tp) b (multi b @.tp) 
+ n (multi n @.tp) m (multi m @.tp) 
+ spc @.spc-typing
+ 
+ ;; extra layers
+ tab @ext
+ caps @cap
+)
+
+;; base-tap layer - toggled with caps + rsft
+(deflayermap (base-tap)
+  caps (t! homerowmod $tot 160 esc (layer-while-held capslock))
+)
+
+;; capslock layer - hold caps to activate
+(deflayer capslock
+  @e`  S-1  S-2  S-3  S-4  S-5  S-6  S-7  S-8  S-9  S-0  S--  S-=   A-bspc
+  lrld _    M-w  @ehe @ehr @et  _    pgup home end  pgdn S-9  S-0   _
+  _    @ea  @es  @ed  @ef  @ehg left @ej  @ek  @el  @e;  _    _
+  _    _    _    M-c  M-v  C-b  A-bspc bspc del A-del    M-/  @tog
+  _    _    _              @mse                 _    _    _
+)
+
+;; extend layer - hold tab to activate
+(deflayer extend
+  @e`  f1   f2   f3   f4   f5   f6   f7   f8   f9   f10  f11  f12  A-bspc
+  _    esc  @emwu _    _   @ma^ pgup home ▲    end  del  esc  ⎀    @emwl
+  @cap ‹⌥   @emwd ‹⇧   ‹⌃  @mav pgdn ◀    ▼    ▶    bspc  _   mltp
+  _    M-z  M-x   M-c  M-v mltp mrtp mmtp _    _    @emwr caps
+  _    _    _              ret                  _    _    _
+)
+
+(deflayermap (mouse)
+  j @ma<
+  k @mav
+  l @ma>
+  i @ma^
+  spc mlft
+  ret mlft
+  bspc mmid
+
+  w @fst
+  e @vsl
+  s mrgt
+  d mmid
+  f mlft
+)
+
+(deflayermap (media)
+  h ◀◀
+  j 🔉
+  k 🔊
+  l ▶▶
+  spc ▶⏸
+  ret ▶⏸
+)
+
+;;-----------------------------------------------------------------------------
+
+(defvirtualkeys
+    fast    (layer-while-held typing)
+)
+
+;; https://github.com/jtroo/kanata/discussions/1656
+(deftemplate homerowmod (timeouttap timeouthold keytap keyhold)
+	(tap-hold $timeouttap $timeouthold 
+		(multi $keytap  @.tp) 
+		$keyhold
+	)
+)
+
+;; homerowmodfiltered is a way to force problematic bigrams to become letters not mods
+(deftemplate homerowmodfiltered (timeouttap timeouthold keytap keyhold typinglist)
+  (tap-hold-release-keys $timeouttap $timeouthold
+    (multi $keytap  @.tp)
+    $keyhold
+    $typinglist ;; Activates $keytap early if a key within $typinglist is pressed before hold activates.
+  )
+)
+
+(defalias
+  ;; call @.tp whenever you want to enter fast typing-layer
+  .tp (hold-for-duration 55 fast)  ;; timeouts from 30 to 100 are wide spread
+  .spc-typing   (multi (on-press release-vkey fast) spc) ;; expilcitly leave typing-layer when hitting `space` - this allows experimenting with higher idle timeouts
+)
+
+(deflayermap (typing) 
+ a a b b c c d d e e f f g g h h i i j j k k l l m m n n o o p p q q r r s s t t u u v v w w x x y y z z 
+ caps XX ;; key deactivations of caps,... are optional
+)
+
+(defalias
+  ehe M-A-C-S-e ;; hyper application shortcuts
+  ehg M-A-C-S-g
+  ehr M-A-C-S-r
+  e` M-A-i ;; reverse application cycling
+
+  cap (t! homerowmod $tot 160 esc (layer-while-held capslock))
+  ext (t! homerowmod $tot 160 tab (layer-while-held extend))
+  mse (t! homerowmod $tot 160 ret (layer-while-held mouse))
+
+  ;; new-tab and reopen-tab if holding meta
+  et (fork (tap-hold-press $TAP $LONG_HOLD M-t (layer-while-held media)) (tap-hold-release $TAP $LONG_HOLD M-S-t (layer-while-held mouse)) (lmet rmet) )
+
+  ;; capslock-specific Home-row mods
+  ;; TODO: Use new template for this
+  ea (tap-hold-press $TAP $LONG_HOLD a lmet)
+  ;; next-tab and prev-tab if holding meta
+  es (fork (tap-hold-press $TAP $LONG_HOLD M-S-] lalt) (tap-hold-release $TAP $LONG_HOLD M-S-[ lalt) (lmet rmet) )
+  ed (tap-hold-press $TAP $LONG_HOLD C-d lctl)
+  ef (tap-hold-press $TAP $LONG_HOLD M-A-C-S-f lsft)
+  ej (tap-hold-press $TAP $LONG_HOLD down rsft)
+  ek (tap-hold-press $TAP $LONG_HOLD up rctl)
+  el (tap-hold-press $TAP $LONG_HOLD right ralt)
+  e; (tap-hold-press $TAP $LONG_HOLD S-; rmet)
+
+  ;; Mouse movement suite
+
+  ;; speed mods
+  fst (movemouse-speed 200)
+  slw (movemouse-speed 50)
+  vsl (movemouse-speed 25)
+
+  ;; mouse wheel
+  emwu (mwheel-up 50 120)
+  emwd (mwheel-down 50 120)
+  emwl (mwheel-left 50 120)
+  emwr (mwheel-right 50 120)
+
+  ;; mouse acceleration
+  ma^ (movemouse-accel-up 1 1000 1 5)
+  ma< (movemouse-accel-left 1 1000 1 5)
+  mav (movemouse-accel-down 1 1000 1 5)
+  ma> (movemouse-accel-right 1 1000 1 5)
+
+  ;; mse (tap-hold-press $TAP $LONG_HOLD ret (layer-while-held mouse))
+
+  tog (switch ;; toggle tap, disables home-row mods
+    ((base-layer base)) (layer-switch base-tap) break
+    ((base-layer base-tap)) (layer-switch base) break
+  )
+)
+
+;;-----------------------------------------------------------------------------
+;; Extra configuration
+
+(defcfg
+  ;; Enabled makes kanata process keys that are not defined in defsrc
+  process-unmapped-keys yes
+  movemouse-inherit-accel-state yes
+  movemouse-smooth-diagonals yes
+  ;; macos-dev-names-include (
+  ;;   "Keychron Q5"
+  ;;   "Apple Internal Keyboard / Trackpad"
+  ;;   "MX Keys M Mac"
+  ;;   "Karabiner DriverKit VirtualHIDKeyboard 1.8.0"
+  ;; )
+  macos-dev-names-exclude (
+    "M720 Triathlon"
+  )
+)

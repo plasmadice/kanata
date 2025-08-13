@@ -1,0 +1,95 @@
+;; Based on jtroo's home-row mod: https://github.com/jtroo/kanata/discussions/718#discussioncomment-8357352
+
+(defcfg
+  process-unmapped-keys yes
+  ;; movemouse-inherit-accel-state yes ;; too powerful? causes mouse speed to ramp up
+  movemouse-smooth-diagonals yes
+  ;; macos-dev-names-include (
+  ;;   "Keychron Q5"
+  ;;   "Apple Internal Keyboard / Trackpad"
+  ;;   "MX Keys M Mac"
+  ;;   "Karabiner DriverKit VirtualHIDKeyboard 1.8.0"
+  ;; )
+  macos-dev-names-exclude (
+    "M720 Triathlon"
+  )
+)
+
+
+(defsrc 
+  IntlBackslash bspc
+  t u
+  caps a s d f i j k l ret
+  ` m ,
+)
+
+(defvar
+  tap-time 150
+  hold-time 100
+
+  non-nav (
+    q w e r t y u o p 
+    a s d f g h ;
+    z x c v b n m , .
+    spc
+  )
+)
+
+(deflayer base
+  ` bspc
+  t u
+  @thyper @a @s @d @f   i    j    k  l ret
+  IntlBackslash m ,
+)
+
+(deflayer nomods
+  IntlBackslash bspc
+  t u
+  caps a s d f i j k l ret
+  ` m ,
+)
+
+(deflayer arrows 
+  XX M-bspc 
+  XX XX
+  XX XX lsft lalt  lmet  (fork up C-up (lsft lalt lmet))   (fork left C-left (lsft lalt lmet)) (fork down C-down (lsft lalt lmet)) (fork right C-right (lsft lalt lmet)) ret
+  XX XX XX 
+)
+
+(deflayer alt-arrows
+  XX A-bspc
+  XX XX
+  XX lctl lsft XX lmet   A-up   A-left A-down A-right A-ret
+  XX XX XX 
+)
+
+(deflayer met-arrows
+  XX M-bspc
+  XX XX
+  XX lctl lsft lalt XX   M-up   M-left M-down M-right M-ret
+  XX XX XX 
+)
+
+(deflayer shift-arrows
+  XX XX 
+  XX XX 
+  XX lctl XX lalt lmet   S-up   S-left S-down S-right S-A-ret
+  XX XX XX
+)
+
+(deffakekeys
+  to-base (layer-switch base)
+)
+(defalias
+  tap (multi
+    (layer-switch nomods)
+    (on-idle-fakekey to-base tap 10)
+  )
+
+  a (tap-hold-release-keys 50 175 (multi a @tap) (layer-while-held arrows) $non-nav)
+  s (tap-hold-release-keys 50 175 (multi s @tap) (layer-while-held shift-arrows) $non-nav)
+  d (tap-hold-release-keys 50 150 (multi d @tap) (layer-while-held alt-arrows) $non-nav)
+  f (tap-hold-release-keys 50 150 (multi f @tap) (layer-while-held met-arrows) $non-nav)
+  hyper (multi ctl alt sft met)
+  thyper (tap-hold 50 125 esc @hyper)
+)

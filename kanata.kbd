@@ -1,0 +1,397 @@
+;; Timing variables for tap-hold effects.
+(defvar
+  TAP 200 ;; The key must be pressed twice in 200ms to enable repetitions.
+  HOLD 200 ;; The key must be held 200ms to become a layer shift.
+  LONG_HOLD 300 ;; Slightly higher value for typing keys, to prevent unexpected hold effect.
+  tot 220 ;; tot=time out tap
+  LTAP 220 ;; Long tap
+)
+
+(defsrc )
+
+;; Base layer: layer-taps under the thumbs + home-row mods on ASDF and HJKL
+(deflayermap (base)
+ ;; define home row mods (they act as typing-layer triggers, too )
+ f (t! homerowmod $tot $LTAP f lsft)
+ j (t! homerowmod $tot $LTAP j rsft)
+ d (t! homerowmod $tot $LTAP d lctl)
+ k (t! homerowmod $tot $LTAP k rctl)
+ s (t! homerowmod $tot $LTAP s lalt)
+ l (t! homerowmod $tot $LTAP l ralt)
+ a (t! homerowmod $tot $LTAP a lmet)
+ ; (t! homerowmod $tot $LTAP ; rmet)
+ ;; define each letter as typing-layer trigger
+ q (t! homerowmod $tot $LTAP q (layer-while-held mouse))
+ w (multi w @.tp) e (multi e @.tp) r (multi r @.tp) t (multi t @.tp) 
+ y (multi y @.tp) u (multi u @.tp) i (multi i @.tp) o (multi o @.tp) p (multi p @.tp) 
+ g (multi g @.tp) h (multi h @.tp) 
+ z (t! homerowmod $tot $LTAP z (layer-while-held media))
+ x (multi x @.tp) c (multi c @.tp) v (multi v @.tp) b (multi b @.tp) 
+ n (multi n @.tp) m (multi m @.tp) 
+ spc @.spc-typing
+ 
+ ;; extra layers
+ tab (t! homerowmod $tot $LTAP tab (layer-while-held extend))
+ caps (t! homerowmod $tot $LTAP esc (layer-while-held capslock))
+)
+
+;; base-tap layer - toggled with caps + rsft
+(deflayermap (base-tap)
+  caps (t! homerowmod $tot 160 esc (layer-while-held capslock))
+)
+
+(deflayermap (capslock)
+  esc caps
+  grv M-A-i 
+  1 S-1
+  2 S-2
+  3 S-3
+  4 S-4
+  5 S-5
+  6 S-6
+  7 S-7
+  8 S-8
+  9 S-9
+  0 S-0
+  - S--
+  = S-=
+  bspc A-bspc
+
+  tab lrld
+  q _
+  w (fork M-w M-S-w (met) ) ;; close-tab and close-window (not quit)
+  ;; hyper application shortcuts
+  e M-A-C-S-e
+  r M-A-C-S-r 
+  t (fork (tap-hold-press $TAP $LONG_HOLD M-t (layer-while-held media)) (tap-hold-release $TAP $LONG_HOLD M-S-t (layer-while-held mouse)) (lmet rmet) )
+  y _
+  u pgup
+  i home
+  o end
+  p pgdn
+  [ S-9
+  ] S-0
+  \ _
+
+  ;; tap-hold-release $TAP $LONG_HOLD M-A-C-S-a lmet
+  a (tap-hold-press $TAP $LONG_HOLD M-A-C-S-a lmet)
+  s (fork (tap-hold-press $TAP $LONG_HOLD M-S-] lalt) (tap-hold-release $TAP $LONG_HOLD M-S-[ lalt) (lmet rmet) )
+  d (tap-hold-press $TAP $LONG_HOLD C-d lctl)
+  f (tap-hold-press $TAP $LONG_HOLD M-A-C-S-f lsft)
+  g M-A-C-S-g
+  ;; h left
+
+  ;; SOCD versions of arrow keys
+  k (multi (on-press press-vkey up-held) (on-press release-vkey arrow-down) (on-press press-vkey arrow-up) (on-release tap-vkey up-arrow-rel))
+  h (multi (on-press press-vkey left-held) (on-press release-vkey arrow-right) (on-press press-vkey arrow-left) (on-release tap-vkey left-arrow-rel))
+  j (multi (on-press press-vkey down-held) (on-press release-vkey arrow-up) (on-press press-vkey arrow-down) (on-release tap-vkey down-arrow-rel))
+  l (multi (on-press press-vkey right-held) (on-press release-vkey arrow-left) (on-press press-vkey arrow-right) (on-release tap-vkey right-arrow-rel))
+  
+  ;; mod-tap versions of arrow keys
+  ;; j (tap-hold-press $TAP $LONG_HOLD down rsft)
+  ;; k (tap-hold-press $TAP $LONG_HOLD up rctl)
+  ;; l (tap-hold-press $TAP $LONG_HOLD right ralt)
+
+  ; (tap-hold-press $TAP $LONG_HOLD S-; rmet)
+  ' _
+  ret S-ret
+
+  c C-c
+  v M-v
+  b C-b
+  n A-bspc 
+  m bspc 
+  , del 
+  . A-del
+  / M-/
+
+  rsft (switch ;; toggle tap, disables home-row mods
+    ((base-layer base)) (layer-switch base-tap) break
+    ((base-layer base-tap)) (layer-switch base) break
+  )
+  ;; spc (t! homerowmod $tot 160 ret (layer-while-held mouse))
+)
+
+(deflayermap (extend)
+  grv M-A-i 
+  1 F1
+  2 F2
+  3 F3
+  4 F4
+  5 F5
+  6 F6
+  7 F7
+  8 F8
+  9 F9
+  0 F10
+  - F11
+  = F12
+  bspc A-bspc
+
+  tab _
+  q esc
+  w (mwheel-up 25 1)
+  e _
+  r _
+  t (movemouse-accel-up 1 1000 1 5)
+  y pgup
+  u home
+  i ArrowUp
+  o end
+  p del
+  [ esc
+  ] Insert
+  \ (mwheel-left 50 120)
+
+  caps (tap-hold-press $TAP $LONG_HOLD a lmet)
+  a lalt   
+  s (mwheel-down 25 1)
+  d lsft   
+  f lctl  
+  g (movemouse-accel-down 1 1000 1 5)
+  h pgdn 
+  j ArrowLeft    
+  k ArrowDown    
+  l ArrowRight    
+  ; bspc  
+  ' _   
+  ret mltp
+
+  z M-z  
+  x M-x   
+  c M-c  
+  v M-v 
+  b mltp 
+  n mrtp 
+  m mmtp 
+  , _    
+  . _    
+  / (mwheel-right 50 120)
+  rsft caps
+)
+
+
+(deflayermap (media)
+  - VolumeDown
+  = VolumeUp
+  h prev
+  j VolumeDown
+  k VolumeUp
+  l next
+  bspc mute
+  m mute
+  ret MediaPlayPause
+  spc MediaPlayPause
+)
+
+;;-----------------------------------------------------------------------------
+
+(defvirtualkeys
+    fast    (layer-while-held typing)
+)
+
+;; https://github.com/jtroo/kanata/discussions/1656
+(deftemplate homerowmod (timeouttap timeouthold keytap keyhold)
+	(tap-hold $timeouttap $timeouthold 
+		(multi $keytap  @.tp) 
+		$keyhold
+	)
+)
+
+(defalias
+  ;; call @.tp whenever you want to enter fast typing-layer
+  .tp (hold-for-duration 55 fast)  ;; timeouts from 30 to 100 are wide spread
+  .spc-typing   (multi (on-press release-vkey fast) spc) ;; expilcitly leave typing-layer when hitting `space` - this allows experimenting with higher idle timeouts
+)
+
+(deflayermap (typing) 
+ a a b b c c d d e e f f g g h h i i j j k k l l m m n n o o p p q q r r s s t t u u v v w w x x y y z z 
+ caps XX ;; key deactivations of caps,... are optional
+)
+
+;; Key layout configuration - change these 4 values to switch layouts (ijkl -> hjkl)
+(defvar
+  up-key    i
+  left-key  j  
+  down-key  k
+  right-key l
+)
+
+(defvirtualkeys
+  ;; Mouse movement
+  mouse-up (movemouse-accel-up 1 500 1 5)
+  mouse-down (movemouse-accel-down 1 500 1 5)
+  mouse-left (movemouse-accel-left 1 500 1 5)
+  mouse-right (movemouse-accel-right 1 500 1 5)
+  
+  ;; Arrow keys
+  arrow-up up
+  arrow-down down
+  arrow-left left
+  arrow-right right
+  
+  ;; State tracking for both layers
+  up-held nop0
+  left-held nop1
+  down-held nop2
+  right-held nop3
+  
+  ;; Mouse release handlers
+  up-mouse-rel (multi (on-press release-vkey up-held) (on-press release-vkey mouse-up) (switch ((input virtual down-held)) (on-press press-vkey mouse-down) break () XX break))
+  left-mouse-rel (multi (on-press release-vkey left-held) (on-press release-vkey mouse-left) (switch ((input virtual right-held)) (on-press press-vkey mouse-right) break () XX break))
+  down-mouse-rel (multi (on-press release-vkey down-held) (on-press release-vkey mouse-down) (switch ((input virtual up-held)) (on-press press-vkey mouse-up) break () XX break))
+  right-mouse-rel (multi (on-press release-vkey right-held) (on-press release-vkey mouse-right) (switch ((input virtual left-held)) (on-press press-vkey mouse-left) break () XX break))
+  
+  ;; Arrow release handlers
+  up-arrow-rel (multi (on-press release-vkey up-held) (on-press release-vkey arrow-up) (switch ((input virtual down-held)) (on-press press-vkey arrow-down) break () XX break))
+  left-arrow-rel (multi (on-press release-vkey left-held) (on-press release-vkey arrow-left) (switch ((input virtual right-held)) (on-press press-vkey arrow-right) break () XX break))
+  down-arrow-rel (multi (on-press release-vkey down-held) (on-press release-vkey arrow-down) (switch ((input virtual up-held)) (on-press press-vkey arrow-up) break () XX break))
+  right-arrow-rel (multi (on-press release-vkey right-held) (on-press release-vkey arrow-right) (switch ((input virtual left-held)) (on-press press-vkey arrow-left) break () XX break))
+)
+
+(deflayermap (mouse)
+  $up-key (multi (on-press press-vkey up-held) (on-press release-vkey mouse-down) (on-press press-vkey mouse-up) (on-release tap-vkey up-mouse-rel))
+  $left-key (multi (on-press press-vkey left-held) (on-press release-vkey mouse-right) (on-press press-vkey mouse-left) (on-release tap-vkey left-mouse-rel))
+  $down-key (multi (on-press press-vkey down-held) (on-press release-vkey mouse-up) (on-press press-vkey mouse-down) (on-release tap-vkey down-mouse-rel))
+  $right-key (multi (on-press press-vkey right-held) (on-press release-vkey mouse-left) (on-press press-vkey mouse-right) (on-release tap-vkey right-mouse-rel))
+
+  ret mlft
+  \ mmid
+  bspc mrgt
+
+  w (movemouse-speed 200)
+  e (movemouse-speed 25)
+
+  r mltp
+  t mrtp
+
+  u (mwheel-down 25 1)
+  p (mwheel-up 25 1)
+  h (mwheel-left 25 1)
+  ; (mwheel-right 25 1)
+
+  s mrgt
+  d mmid
+  f mlft
+
+  , mbck
+  . mfwd
+)
+
+;;-----------------------------------------------------------------------------
+;; Extra configuration
+
+(defcfg
+  process-unmapped-keys yes
+  ;; movemouse-inherit-accel-state yes ;; too powerful? causes mouse speed to ramp on diagonal movements
+  movemouse-smooth-diagonals yes
+  ;; macos-dev-names-include (
+  ;;   "Keychron Q5"
+  ;;   "MX Keys M Mac"
+  ;;   "Apple Internal Keyboard / Trackpad"
+  ;;   "Karabiner DriverKit VirtualHIDKeyboard 1.8.0"
+  ;; )
+  macos-dev-names-exclude (
+    "M720 Triathlon" ;; Only required when using bluetooth
+  )
+)
+
+;; `defsrc` defines the keys that will be intercepted by kanata.
+
+;; Define the source keyboard layout (based on standard MacOS keyboard)
+ ;; Mac, standard finger assignment
+;; (defsrc
+;;   grv  1    2    3    4    5    6    7    8    9    0    -    =    bspc
+;;   tab  q    w    e    r    t    y    u    i    o    p    [    ]    \
+;;   caps a    s    d    f    g    h    j    k    l    ;    '    ret
+;;   lsft z    x    c    v    b    n    m    ,    .    /    rsft
+;;   lctl lalt lmet           spc            rmet ralt rctl
+;; )
+
+
+;; ;; capslock layer - hold caps to activate
+;; (deflayer capslock
+;;   @e`  S-1  S-2  S-3  S-4  S-5  S-6  S-7  S-8  S-9  S-0  S--  S-=   A-bspc
+;;   lrld _    M-w  @ehe @ehr @et  _    pgup home end  pgdn S-9  S-0   _
+;;   _    @ea  @es  @ed  @ef  @ehg left @ej  @ek  @el  @e;  _    _
+;;   _    _    _    C-c  M-v  C-b  A-bspc bspc del A-del    M-/  @tog
+;;   _    _    _              @mse                 _    _    _
+;; )
+
+;; extend layer - hold tab to activate
+;; (deflayer extend
+;;   @e`  F1   F2   F3   F4   F5   F6   F7   F8   F9   F10  F11  F12  A-bspc
+;;   _    esc  @emwu _    _   @ma^ pgup home ▲    end  del  esc  ⎀    @emwl
+;;   @cap ‹⌥   @emwd ‹⇧   ‹⌃  @mav pgdn ◀    ▼    ▶    bspc  _   mltp
+;;   _    M-z  M-x   M-c  M-v mltp mrtp mmtp _    _    @emwr caps
+;;   _    _    _              ret                  _    _    _
+;; )
+
+;; (deflayermap (mouse)
+;;   j @ma<
+;;   k @mav
+;;   l @ma>
+;;   i @ma^
+;;   spc mlft
+;;   ret mlft
+;;   bspc mmid
+
+;;   w @fst
+;;   e @vsl
+;;   s mrgt
+;;   d mmid
+;;   f mlft
+;; )
+
+
+;; (defalias
+;;   ehe M-A-C-S-e ;; hyper application shortcuts
+;;   ehg M-A-C-S-g
+;;   ehr M-A-C-S-r
+;;   e` M-A-i ;; reverse application cycling
+
+;;   cap (t! homerowmod $tot 160 esc (layer-while-held capslock))
+;;   ext (t! homerowmod $tot 160 tab (layer-while-held extend))
+;;   mse (t! homerowmod $tot 160 ret (layer-while-held mouse))
+
+;;   ;; new-tab and reopen-tab if holding meta
+;;   et (fork (tap-hold-press $TAP $LONG_HOLD M-t (layer-while-held media)) (tap-hold-release $TAP $LONG_HOLD M-S-t (layer-while-held mouse)) (lmet rmet) )
+
+;;   ;; capslock-specific Home-row mods
+;;   ;; TODO: Use new template for this
+;;   ea (tap-hold-press $TAP $LONG_HOLD a lmet)
+;;   ;; next-tab and prev-tab if holding meta
+;;   es (fork (tap-hold-press $TAP $LONG_HOLD M-S-] lalt) (tap-hold-release $TAP $LONG_HOLD M-S-[ lalt) (lmet rmet) )
+;;   ed (tap-hold-press $TAP $LONG_HOLD C-d lctl)
+;;   ef (tap-hold-press $TAP $LONG_HOLD M-A-C-S-f lsft)
+;;   ej (tap-hold-press $TAP $LONG_HOLD down rsft)
+;;   ek (tap-hold-press $TAP $LONG_HOLD up rctl)
+;;   el (tap-hold-press $TAP $LONG_HOLD right ralt)
+;;   e; (tap-hold-press $TAP $LONG_HOLD S-; rmet)
+
+;;   ;; Mouse movement suite
+
+;;   ;; speed mods
+;;   fst (movemouse-speed 200)
+;;   slw (movemouse-speed 50)
+;;   vsl (movemouse-speed 25)
+
+;;   ;; mouse wheel
+;;   emwu (mwheel-up 50 120)
+;;   emwd (mwheel-down 50 120)
+;;   emwl (mwheel-left 50 120)
+;;   emwr (mwheel-right 50 120)
+
+;;   ;; mouse acceleration
+;;   ma^ (movemouse-accel-up 1 1000 1 5)
+;;   ma< (movemouse-accel-left 1 1000 1 5)
+;;   mav (movemouse-accel-down 1 1000 1 5)
+;;   ma> (movemouse-accel-right 1 1000 1 5)
+
+;;   ;; mse (tap-hold-press $TAP $LONG_HOLD ret (layer-while-held mouse))
+
+;;   tog (switch ;; toggle tap, disables home-row mods
+;;     ((base-layer base)) (layer-switch base-tap) break
+;;     ((base-layer base-tap)) (layer-switch base) break
+;;   )
+;; )

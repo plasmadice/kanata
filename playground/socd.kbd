@@ -1,0 +1,69 @@
+(defsrc)
+
+;; Key layout configuration - change these 4 values to switch layouts (ijkl -> hjkl)
+(defvar
+  up-key    i
+  left-key  j  
+  down-key  k
+  right-key l
+)
+
+(defvirtualkeys
+  ;; Mouse movement
+  mouse-up (movemouse-up 1 1)
+  mouse-down (movemouse-down 1 1)
+  mouse-left (movemouse-left 1 1)
+  mouse-right (movemouse-right 1 1)
+  
+  ;; Arrow keys
+  arrow-up up
+  arrow-down down
+  arrow-left left
+  arrow-right right
+  
+  ;; State tracking for both layers
+  up-held nop0
+  left-held nop1
+  down-held nop2
+  right-held nop3
+  
+  ;; Mouse release handlers
+  up-mouse-rel (multi (on-press release-vkey up-held) (on-press release-vkey mouse-up) (switch ((input virtual down-held)) (on-press press-vkey mouse-down) break () XX break))
+  left-mouse-rel (multi (on-press release-vkey left-held) (on-press release-vkey mouse-left) (switch ((input virtual right-held)) (on-press press-vkey mouse-right) break () XX break))
+  down-mouse-rel (multi (on-press release-vkey down-held) (on-press release-vkey mouse-down) (switch ((input virtual up-held)) (on-press press-vkey mouse-up) break () XX break))
+  right-mouse-rel (multi (on-press release-vkey right-held) (on-press release-vkey mouse-right) (switch ((input virtual left-held)) (on-press press-vkey mouse-left) break () XX break))
+  
+  ;; Arrow release handlers
+  up-arrow-rel (multi (on-press release-vkey up-held) (on-press release-vkey arrow-up) (switch ((input virtual down-held)) (on-press press-vkey arrow-down) break () XX break))
+  left-arrow-rel (multi (on-press release-vkey left-held) (on-press release-vkey arrow-left) (switch ((input virtual right-held)) (on-press press-vkey arrow-right) break () XX break))
+  down-arrow-rel (multi (on-press release-vkey down-held) (on-press release-vkey arrow-down) (switch ((input virtual up-held)) (on-press press-vkey arrow-up) break () XX break))
+  right-arrow-rel (multi (on-press release-vkey right-held) (on-press release-vkey arrow-right) (switch ((input virtual left-held)) (on-press press-vkey arrow-left) break () XX break))
+)
+
+(deflayermap (base)
+  caps (tap-hold-press 200 200 caps (layer-while-held mouse))
+  tab (tap-hold-press 200 200 tab (layer-while-held arrows))
+)
+
+(deflayermap (mouse)
+  $up-key (multi (on-press press-vkey up-held) (on-press release-vkey mouse-down) (on-press press-vkey mouse-up) (on-release tap-vkey up-mouse-rel))
+  $left-key (multi (on-press press-vkey left-held) (on-press release-vkey mouse-right) (on-press press-vkey mouse-left) (on-release tap-vkey left-mouse-rel))
+  $down-key (multi (on-press press-vkey down-held) (on-press release-vkey mouse-up) (on-press press-vkey mouse-down) (on-release tap-vkey down-mouse-rel))
+  $right-key (multi (on-press press-vkey right-held) (on-press release-vkey mouse-left) (on-press press-vkey mouse-right) (on-release tap-vkey right-mouse-rel))
+)
+
+(deflayermap (arrows)
+  $up-key (multi (on-press press-vkey up-held) (on-press release-vkey arrow-down) (on-press press-vkey arrow-up) (on-release tap-vkey up-arrow-rel))
+  $left-key (multi (on-press press-vkey left-held) (on-press release-vkey arrow-right) (on-press press-vkey arrow-left) (on-release tap-vkey left-arrow-rel))
+  $down-key (multi (on-press press-vkey down-held) (on-press release-vkey arrow-up) (on-press press-vkey arrow-down) (on-release tap-vkey down-arrow-rel))
+  $right-key (multi (on-press press-vkey right-held) (on-press release-vkey arrow-left) (on-press press-vkey arrow-right) (on-release tap-vkey right-arrow-rel))
+)
+
+(defcfg
+  process-unmapped-keys yes
+  movemouse-inherit-accel-state yes
+  movemouse-smooth-diagonals yes
+  macos-dev-names-exclude (
+    "M720 Triathlon"
+  )
+)
