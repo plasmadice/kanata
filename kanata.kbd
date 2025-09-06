@@ -92,7 +92,7 @@
   ;; l (tap-hold-press $TAP $LONG_HOLD right ralt)
 
   ; (tap-hold-press $TAP $LONG_HOLD S-; rmet)
-  ' _
+  ' S-'
   ret S-ret
 
   c C-c
@@ -258,16 +258,27 @@
   \ mmid
   bspc mrgt
 
-  w (movemouse-speed 200)
-  e (movemouse-speed 25)
+  ;; passthrough nop8 and nop9 for interception (speed modifiers)
+  w (multi (movemouse-speed 200) nop8)
+  e (multi (movemouse-speed 25) nop9)
 
   r mltp
   t mrtp
 
-  u (mwheel-down 25 1)
-  p (mwheel-up 25 1)
   h (mwheel-left 25 1)
   ; (mwheel-right 25 1)
+
+  ;; mouse wheel speed modifiers
+  p (switch
+    (nop8) (mwheel-up 10 1) break
+    (nop9) (mwheel-up 50 2) break
+    () (mwheel-up 25 1) break
+  )
+  u (switch
+    (nop8) (mwheel-down 10 1) break
+    (nop9) (mwheel-down 50 2) break
+    () (mwheel-down 25 1) break
+  )
 
   s mrgt
   d mmid
