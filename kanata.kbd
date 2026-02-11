@@ -11,34 +11,38 @@
 ;; Base layer: layer-taps under the thumbs + home-row mods on ASDF and HJKL
 (deflayermap (base)
 
- ;; define home row mods (they act as typing-layer triggers, too )
- f (t! homerowmod $tot $LTAP f lsft)
- j (t! homerowmod $tot $LTAP j rsft)
- d (t! homerowmod $tot $LTAP d lctl)
- k (t! homerowmod $tot $LTAP k rctl)
- s (t! homerowmod $tot $LTAP s lalt)
- l (t! homerowmod $tot $LTAP l ralt)
- a (t! homerowmod $tot $LTAP a lmet)
- ; (t! homerowmod $tot $LTAP ; rmet)
+  ;; define home row mods (they act as typing-layer triggers, too )
+  f (t! homerowmod $tot $LTAP f lsft)
+  j (t! homerowmod $tot $LTAP j rsft)
+  d (t! homerowmod $tot $LTAP d lctl)
+  k (t! homerowmod $tot $LTAP k rctl)
+  s (t! homerowmod $tot $LTAP s lalt)
+  l (t! homerowmod $tot $LTAP l ralt)
+  a (t! homerowmod $tot $LTAP a lmet)
+  ; (t! homerowmod $tot $LTAP ; rmet)
 
- ;; define each letter as typing-layer trigger
- q (t! homerowmod $tot $LTAP q (layer-while-held mouse))
- w (multi w @.tp) e (multi e @.tp) r (multi r @.tp) t (multi t @.tp) 
- y (multi y @.tp) u (multi u @.tp) i (multi i @.tp) o (multi o @.tp) p (multi p @.tp) 
- g (multi g @.tp) h (multi h @.tp) 
- z (t! homerowmod $tot $LTAP z (layer-while-held media))
- x (multi x @.tp) c (multi c @.tp) v (multi v @.tp) b (multi b @.tp) 
- n (multi n @.tp) m (multi m @.tp) 
+  ;; define each letter as typing-layer trigger
+  q (t! homerowmod $tot $LTAP q (layer-while-held mouse))
+  z (t! homerowmod $tot $LTAP z (layer-while-held media))
+  w (multi w @.tp) e (multi e @.tp) r (multi r @.tp) t (multi t @.tp) 
+  y (multi y @.tp) u (multi u @.tp) i (multi i @.tp) o (multi o @.tp) p (multi p @.tp) 
+  g (multi g @.tp) h (multi h @.tp) 
+  x (multi x @.tp) c (multi c @.tp) v (multi v @.tp) b (multi b @.tp) 
+  n (multi n @.tp) m (multi m @.tp) 
 
- spc @.spc-typing
- ;; extra layers
- tab (t! homerowmod $tot $LTAP tab (layer-while-held extend))
- caps (t! homerowmod $tot $LTAP esc (layer-while-held capslock))
+  ;;  spc @.spc-typing
+  ;; extra layers
+  tab (t! homerowmod $tot $LTAP tab (layer-while-held extend))
+  spc (t! homerowmod $tot $LTAP @.spc-typing (multi ctl alt sft met))
+  caps (t! homerowmod $tot $LTAP esc (layer-while-held capslock))
 )
 
-;; base-tap layer - toggled with caps + rsft
+;; base-tap "Gaming" layer - toggled with caps + rsft
 (deflayermap (base-tap)
   caps (t! homerowmod $tot 160 esc (layer-while-held capslock))
+  q (t! homerowmod $tot $LTAP q (layer-while-held mouse))
+  z (t! homerowmod $tot $LTAP z (layer-while-held media))
+  rshft (t! homerowmod $tot $LTAP @.spc-typing-gaming (multi ctl alt sft met))
 )
 
 (deflayermap (capslock)
@@ -200,6 +204,7 @@
   ;; call @.tp whenever you want to enter fast typing-layer
   .tp (hold-for-duration 55 fast)  ;; timeouts from 30 to 100 are wide spread
   .spc-typing   (multi (on-press release-vkey fast) spc) ;; expilcitly leave typing-layer when hitting `space` - this allows experimenting with higher idle timeouts
+  .spc-typing-gaming   (multi (on-press release-vkey fast) rshft) ;; expilcitly leave typing-layer when hitting `space` - this allows experimenting with higher idle timeouts
 )
 
 (deflayermap (typing) 
