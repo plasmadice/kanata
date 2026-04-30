@@ -33,8 +33,7 @@
   ;;  spc @.spc-typing
   ;; extra layers
   ;; tab (t! homerowmod $tot $LTAP tab (layer-while-held extend))
-  tab (t! homerowmod $tot $LTAP @.spc-typing-tab (multi ctl alt sft met))
-  spc (t! homerowmod $tot $LTAP @.spc-typing (multi ctl alt sft met))
+  tab (t! homerowmod $tot $LTAP @.spc-typing-tab (layer-while-held hyper-tab))
   caps (t! homerowmod $tot $LTAP esc (layer-while-held capslock))
 )
 
@@ -43,7 +42,8 @@
   caps (t! homerowmod $tot 160 esc (layer-while-held capslock))
   q (t! homerowmod $tot $LTAP q (layer-while-held mouse))
   z (t! homerowmod $tot $LTAP z (layer-while-held media))
-  tab (t! homerowmod $tot $LTAP @.spc-typing-tab (multi ctl alt sft met))
+  tab (t! homerowmod $tot $LTAP @.spc-typing-tab (layer-while-held hyper-tab))
+  ;; bspc C-bspc
 )
 
 (deflayermap (capslock)
@@ -98,7 +98,7 @@
 
   ; (tap-hold-press $TAP $LONG_HOLD S-; rmet)
   ' S-'
-  ret S-ret
+  ret caps ;; previously S-ret
 
   c C-c
   v M-v
@@ -185,6 +185,9 @@
   m mute
   ret MediaPlayPause
   spc MediaPlayPause
+  r A-C-m
+  t A-C-m
+  s A-C-m
 )
 
 ;;-----------------------------------------------------------------------------
@@ -192,6 +195,50 @@
 (defvirtualkeys
     fast    (layer-while-held typing)
 )
+
+;; Layout + click timing (used by $up-key, auto-click intervals)
+(defvar
+  up-key    i
+  left-key  j  
+  down-key  k
+  right-key l
+  aclk-fast 100
+  aclk-med  1000
+  aclk-slow 3500
+)
+
+(defvirtualkeys
+  ;; Mouse movement
+  mouse-up (movemouse-accel-up 1 500 1 5)
+  mouse-down (movemouse-accel-down 1 500 1 5)
+  mouse-left (movemouse-accel-left 1 500 1 5)
+  mouse-right (movemouse-accel-right 1 500 1 5)
+  arrow-up up
+  arrow-down down
+  arrow-left left
+  arrow-right right
+  up-held nop0
+  left-held nop1
+  down-held nop2
+  right-held nop3
+  up-mouse-rel (multi (on-press release-vkey up-held) (on-press release-vkey mouse-up) (switch ((input virtual down-held)) (on-press press-vkey mouse-down) break () XX break))
+  left-mouse-rel (multi (on-press release-vkey left-held) (on-press release-vkey mouse-left) (switch ((input virtual right-held)) (on-press press-vkey mouse-right) break () XX break))
+  down-mouse-rel (multi (on-press release-vkey down-held) (on-press release-vkey mouse-down) (switch ((input virtual up-held)) (on-press press-vkey mouse-up) break () XX break))
+  right-mouse-rel (multi (on-press release-vkey right-held) (on-press release-vkey mouse-right) (switch ((input virtual left-held)) (on-press press-vkey mouse-left) break () XX break))
+  up-arrow-rel (multi (on-press release-vkey up-held) (on-press release-vkey arrow-up) (switch ((input virtual down-held)) (on-press press-vkey arrow-down) break () XX break))
+  left-arrow-rel (multi (on-press release-vkey left-held) (on-press release-vkey arrow-left) (switch ((input virtual right-held)) (on-press press-vkey arrow-right) break () XX break))
+  down-arrow-rel (multi (on-press release-vkey down-held) (on-press release-vkey arrow-down) (switch ((input virtual up-held)) (on-press press-vkey arrow-up) break () XX break))
+  right-arrow-rel (multi (on-press release-vkey right-held) (on-press release-vkey arrow-right) (switch ((input virtual left-held)) (on-press press-vkey arrow-left) break () XX break))
+  autol100   (macro-repeat-release-cancel mlft  $aclk-fast)
+  autol1000  (macro-repeat-release-cancel mlft  $aclk-med)
+  autol3500  (macro-repeat-release-cancel mlft  $aclk-slow)
+  autor100   (macro-repeat-release-cancel mrgt  $aclk-fast)
+  autor1000  (macro-repeat-release-cancel mrgt  $aclk-med)
+  autor3500  (macro-repeat-release-cancel mrgt  $aclk-slow)
+)
+
+;; One-shot hyper chord (cmd+alt+ctrl+shift) + key; used on hyper-tab layer
+(deftemplate hyperk (key) (multi ctl alt sft met $key))
 
 ;; https://github.com/jtroo/kanata/discussions/1656
 (deftemplate homerowmod (timeouttap timeouthold keytap keyhold)
@@ -208,52 +255,39 @@
   .spc-typing-tab   (multi (on-press release-vkey fast) tab) ;; expilcitly leave typing-layer when hitting `space` - this allows experimenting with higher idle timeouts
 )
 
+;; Key layout: $up-key etc. set above in defvar (ijkl; change there to use hjkl)
 (deflayermap (typing) 
  a a b b c c d d e e f f g g h h i i j j k k l l m m n n o o p p q q r r s s t t u u v v w w x x y y z z 
  caps XX ;; key deactivations of caps,... are optional
 )
 
-;; Key layout configuration - change these 4 values to switch layouts (ijkl -> hjkl)
-(defvar
-  up-key    i
-  left-key  j  
-  down-key  k
-  right-key l
+;; Hold Tab: hyper passthrough; Tab + IJKL = SOCD arrows (same vk graph as capslock hjkl)
+(deflayermap (hyper-tab)
+  tab _
+
+  $up-key (multi (on-press press-vkey up-held) (on-press release-vkey arrow-down) (on-press press-vkey arrow-up) (on-release tap-vkey up-arrow-rel))
+  $left-key (multi (on-press press-vkey left-held) (on-press release-vkey arrow-right) (on-press press-vkey arrow-left) (on-release tap-vkey left-arrow-rel))
+  $down-key (multi (on-press press-vkey down-held) (on-press release-vkey arrow-up) (on-press press-vkey arrow-down) (on-release tap-vkey down-arrow-rel))
+  $right-key (multi (on-press press-vkey right-held) (on-press release-vkey arrow-left) (on-press press-vkey arrow-right) (on-release tap-vkey right-arrow-rel))
+
+  a (t! hyperk a) b (t! hyperk b) c (t! hyperk c) d (t! hyperk d) e (t! hyperk e) f (t! hyperk f) g (t! hyperk g)
+  h (t! hyperk h) m (t! hyperk m) n (t! hyperk n) o (t! hyperk o) p (t! hyperk p)
+  q (t! hyperk q) r (t! hyperk r) s (t! hyperk s) t (t! hyperk t)
+  u (t! hyperk u) v (t! hyperk v) w (t! hyperk w) x (t! hyperk x) y (t! hyperk y) z (t! hyperk z)
+
+  1 (t! hyperk 1) 2 (t! hyperk 2) 3 (t! hyperk 3) 4 (t! hyperk 4) 5 (t! hyperk 5)
+  6 (t! hyperk 6) 7 (t! hyperk 7) 8 (t! hyperk 8) 9 (t! hyperk 9) 0 (t! hyperk 0)
+
+  , (t! hyperk ,) . (t! hyperk .) / (t! hyperk /)
+  spc (t! hyperk spc)
+  ret (t! hyperk ret)
+  bspc (t! hyperk bspc)
+  esc (t! hyperk esc)
+  F1 (t! hyperk F1) F2 (t! hyperk F2) F3 (t! hyperk F3) F4 (t! hyperk F4) F5 (t! hyperk F5) F6 (t! hyperk F6)
+  F7 (t! hyperk F7) F8 (t! hyperk F8) F9 (t! hyperk F9) F10 (t! hyperk F10) F11 (t! hyperk F11) F12 (t! hyperk F12)
 )
 
-(defvirtualkeys
-  ;; Mouse movement
-  mouse-up (movemouse-accel-up 1 500 1 5)
-  mouse-down (movemouse-accel-down 1 500 1 5)
-  mouse-left (movemouse-accel-left 1 500 1 5)
-  mouse-right (movemouse-accel-right 1 500 1 5)
-  
-  ;; Arrow keys
-  arrow-up up
-  arrow-down down
-  arrow-left left
-  arrow-right right
-  
-  ;; State tracking for both layers
-  up-held nop0
-  left-held nop1
-  down-held nop2
-  right-held nop3
-  
-  ;; Mouse release handlers
-  up-mouse-rel (multi (on-press release-vkey up-held) (on-press release-vkey mouse-up) (switch ((input virtual down-held)) (on-press press-vkey mouse-down) break () XX break))
-  left-mouse-rel (multi (on-press release-vkey left-held) (on-press release-vkey mouse-left) (switch ((input virtual right-held)) (on-press press-vkey mouse-right) break () XX break))
-  down-mouse-rel (multi (on-press release-vkey down-held) (on-press release-vkey mouse-down) (switch ((input virtual up-held)) (on-press press-vkey mouse-up) break () XX break))
-  right-mouse-rel (multi (on-press release-vkey right-held) (on-press release-vkey mouse-right) (switch ((input virtual left-held)) (on-press press-vkey mouse-left) break () XX break))
-  
-  ;; Arrow release handlers
-  up-arrow-rel (multi (on-press release-vkey up-held) (on-press release-vkey arrow-up) (switch ((input virtual down-held)) (on-press press-vkey arrow-down) break () XX break))
-  left-arrow-rel (multi (on-press release-vkey left-held) (on-press release-vkey arrow-left) (switch ((input virtual right-held)) (on-press press-vkey arrow-right) break () XX break))
-  down-arrow-rel (multi (on-press release-vkey down-held) (on-press release-vkey arrow-down) (switch ((input virtual up-held)) (on-press press-vkey arrow-up) break () XX break))
-  right-arrow-rel (multi (on-press release-vkey right-held) (on-press release-vkey arrow-right) (switch ((input virtual left-held)) (on-press press-vkey arrow-left) break () XX break))
-)
-
-;; Accessed via q
+;; Mouse layer accessed via q
 (deflayermap (mouse)
   $up-key (multi (on-press press-vkey up-held) (on-press release-vkey mouse-down) (on-press press-vkey mouse-up) (on-release tap-vkey up-mouse-rel))
   $left-key (multi (on-press press-vkey left-held) (on-press release-vkey mouse-right) (on-press press-vkey mouse-left) (on-release tap-vkey left-mouse-rel))
@@ -264,9 +298,30 @@
   \ mmid
   bspc mrgt
 
-  ;; passthrough nop8 and nop9 for interception (speed modifiers)
+  ;; passthrough nop8/nop9 (wheel + 8/9 rate); hold w and/or e before pressing 8/9 for 0.1s / 3.5s / 1s
   w (multi (movemouse-speed 200) nop8)
   e (multi (movemouse-speed 25) nop9)
+
+  8 (switch
+    ((input virtual autol100))  (on-press release-vkey autol100) break
+    ((input virtual autol1000))  (on-press release-vkey autol1000) break
+    ((input virtual autol3500))  (on-press release-vkey autol3500) break
+    (nop8) (on-press press-vkey autol100) break
+    (nop9) (on-press press-vkey autol3500) break
+    () (on-press press-vkey autol1000) break
+  )
+  9 (switch
+    ((input virtual autor100))  (on-press release-vkey autor100) break
+    ((input virtual autor1000))  (on-press release-vkey autor1000) break
+    ((input virtual autor3500))  (on-press release-vkey autor3500) break
+    (nop8) (on-press press-vkey autor100) break
+    (nop9) (on-press press-vkey autor3500) break
+    () (on-press press-vkey autor1000) break
+  )
+  0 (multi
+    (on-press release-vkey autol100) (on-press release-vkey autol1000) (on-press release-vkey autol3500)
+    (on-press release-vkey autor100) (on-press release-vkey autor1000) (on-press release-vkey autor3500)
+  )
 
   r mltp
   t mrtp
@@ -303,5 +358,6 @@
   movemouse-smooth-diagonals yes
   macos-dev-names-exclude (
     "M720 Triathlon" ;; Only required when using bluetooth
+    "0x10934D68AB937837" ;; Razer "Naga V2 HS" bluetooth hash
   )
 )
