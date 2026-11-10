@@ -35,14 +35,18 @@
   ;; tab (t! homerowmod $tot $LTAP tab (layer-while-held extend))
   tab (t! homerowmod $tot $LTAP @.spc-typing-tab (layer-while-held hyper-tab))
   caps (t! homerowmod $tot $LTAP esc (layer-while-held capslock))
+  ret (t! homerowmod $tot $LTAP ret (layer-while-held capslock))
+  \ (t! homerowmod $tot $LTAP \ (layer-while-held hyper-tab))
 )
 
 ;; base-tap "Gaming" layer - toggled with caps + rsft
 (deflayermap (base-tap)
-  caps (t! homerowmod $tot 160 esc (layer-while-held capslock))
   q (t! homerowmod $tot $LTAP q (layer-while-held mouse))
   z (t! homerowmod $tot $LTAP z (layer-while-held media))
   tab (t! homerowmod $tot $LTAP @.spc-typing-tab (layer-while-held hyper-tab))
+  caps (t! homerowmod $tot $LTAP esc (layer-while-held capslock))
+  ret (t! homerowmod $tot $LTAP ret (layer-while-held capslock))
+  \ (t! homerowmod $tot $LTAP \ (layer-while-held hyper-tab))
   ;; bspc C-bspc
 )
 
@@ -63,7 +67,8 @@
   = F12
   bspc A-bspc
 
-  tab lrld
+  ;; Holding Tab with Caps keeps this layer active and adds Hyper modifiers.
+  tab (multi ctl alt sft met (layer-while-held capslock))
   q _
   w (fork M-w M-S-w (met) ) ;; close-tab and close-window (not quit)
   e M-A-C-S-e
@@ -86,6 +91,7 @@
   g M-A-C-S-g
 
   ;; SOCD versions of arrow keys
+  ;; TODO: refactor
   h (multi (on-press press-vkey left-held) (on-press release-vkey arrow-right) (on-press press-vkey arrow-left) (on-release tap-vkey left-arrow-rel))
   j (multi (on-press press-vkey down-held) (on-press release-vkey arrow-up) (on-press press-vkey arrow-down) (on-release tap-vkey down-arrow-rel))
   k (multi (on-press press-vkey up-held) (on-press release-vkey arrow-down) (on-press press-vkey arrow-up) (on-release tap-vkey up-arrow-rel))
@@ -113,6 +119,9 @@
     ((base-layer base)) (layer-switch base-tap) break
     ((base-layer base-tap)) (layer-switch base) break
   )
+
+
+  spc M-A-C-spc
 )
 
 (deflayermap (extend)
@@ -205,6 +214,9 @@
   aclk-fast 100
   aclk-med  1000
   aclk-slow 3500
+  ;; random auto-click: macro cycles delays in this range (ms); not true random
+  aclk-rand-min 3500
+  aclk-rand-max 4500
 )
 
 (defvirtualkeys
@@ -232,9 +244,12 @@
   autol100   (macro-repeat-release-cancel mlft  $aclk-fast)
   autol1000  (macro-repeat-release-cancel mlft  $aclk-med)
   autol3500  (macro-repeat-release-cancel mlft  $aclk-slow)
+  ;; 3–4s irregular left/right auto-click (Q > R > 8/9); repeats this delay pattern
+  autolrand  (macro-repeat-release-cancel mlft 3000 mlft 3175 mlft 3350 mlft 3525 mlft 3700 mlft 3875 mlft 3050 mlft 3225 mlft 3400 mlft 3575 mlft 3750 mlft 3925)
   autor100   (macro-repeat-release-cancel mrgt  $aclk-fast)
   autor1000  (macro-repeat-release-cancel mrgt  $aclk-med)
   autor3500  (macro-repeat-release-cancel mrgt  $aclk-slow)
+  autorrand  (macro-repeat-release-cancel mrgt 3000 mrgt 3175 mrgt 3350 mrgt 3525 mrgt 3700 mrgt 3875 mrgt 3050 mrgt 3225 mrgt 3400 mrgt 3575 mrgt 3750 mrgt 3925)
 )
 
 ;; One-shot hyper chord (cmd+alt+ctrl+shift) + key; used on hyper-tab layer
@@ -264,6 +279,8 @@
 ;; Hold Tab: hyper passthrough; Tab + IJKL = SOCD arrows (same vk graph as capslock hjkl)
 (deflayermap (hyper-tab)
   tab _
+  ;; Holding Caps with Tab keeps Capslock mappings and adds Hyper modifiers.
+  caps (multi ctl alt sft met (layer-while-held capslock))
 
   $up-key (multi (on-press press-vkey up-held) (on-press release-vkey arrow-down) (on-press press-vkey arrow-up) (on-release tap-vkey up-arrow-rel))
   $left-key (multi (on-press press-vkey left-held) (on-press release-vkey arrow-right) (on-press press-vkey arrow-left) (on-release tap-vkey left-arrow-rel))
@@ -281,7 +298,7 @@
   , (t! hyperk ,) . (t! hyperk .) / (t! hyperk /)
   spc (t! hyperk spc)
   ret (t! hyperk ret)
-  bspc (t! hyperk bspc)
+  bspc C-bspc
   esc (t! hyperk esc)
   F1 (t! hyperk F1) F2 (t! hyperk F2) F3 (t! hyperk F3) F4 (t! hyperk F4) F5 (t! hyperk F5) F6 (t! hyperk F6)
   F7 (t! hyperk F7) F8 (t! hyperk F8) F9 (t! hyperk F9) F10 (t! hyperk F10) F11 (t! hyperk F11) F12 (t! hyperk F12)
@@ -298,32 +315,36 @@
   \ mmid
   bspc mrgt
 
-  ;; passthrough nop8/nop9 (wheel + 8/9 rate); hold w and/or e before pressing 8/9 for 0.1s / 3.5s / 1s
+  ;; passthrough nop7/nop8/nop9 (wheel + 8/9 rate); w=fast e=slow r=random (3–4s)
   w (multi (movemouse-speed 200) nop8)
   e (multi (movemouse-speed 25) nop9)
+  r nop7
 
   8 (switch
     ((input virtual autol100))  (on-press release-vkey autol100) break
     ((input virtual autol1000))  (on-press release-vkey autol1000) break
     ((input virtual autol3500))  (on-press release-vkey autol3500) break
+    ((input virtual autolrand))  (on-press release-vkey autolrand) break
     (nop8) (on-press press-vkey autol100) break
     (nop9) (on-press press-vkey autol3500) break
+    (nop7) (on-press press-vkey autolrand) break
     () (on-press press-vkey autol1000) break
   )
   9 (switch
     ((input virtual autor100))  (on-press release-vkey autor100) break
     ((input virtual autor1000))  (on-press release-vkey autor1000) break
     ((input virtual autor3500))  (on-press release-vkey autor3500) break
+    ((input virtual autorrand))  (on-press release-vkey autorrand) break
     (nop8) (on-press press-vkey autor100) break
     (nop9) (on-press press-vkey autor3500) break
+    (nop7) (on-press press-vkey autorrand) break
     () (on-press press-vkey autor1000) break
   )
   0 (multi
-    (on-press release-vkey autol100) (on-press release-vkey autol1000) (on-press release-vkey autol3500)
-    (on-press release-vkey autor100) (on-press release-vkey autor1000) (on-press release-vkey autor3500)
+    (on-press release-vkey autol100) (on-press release-vkey autol1000) (on-press release-vkey autol3500) (on-press release-vkey autolrand)
+    (on-press release-vkey autor100) (on-press release-vkey autor1000) (on-press release-vkey autor3500) (on-press release-vkey autorrand)
   )
 
-  r mltp
   t mrtp
 
   h (mwheel-left 25 1)
@@ -358,6 +379,7 @@
   movemouse-smooth-diagonals yes
   macos-dev-names-exclude (
     "M720 Triathlon" ;; Only required when using bluetooth
+    "Xbox Wireless Controller" 
     "0x10934D68AB937837" ;; Razer "Naga V2 HS" bluetooth hash
   )
 )
